@@ -17,6 +17,7 @@ public class Main extends Application {
   public static int numberOfLines = 0;
   public static int displayedQuestion = 0;
   public static int score = 0;
+  public static String user_name_gloal;
   @Override
   public void start(Stage stage) {
 
@@ -239,7 +240,7 @@ public class Main extends Application {
      */
     Group resultMenu = new Group();
     
-    TextArea resultTextFromFile = new TextArea("This is some text");
+    TextArea resultTextFromFile = new TextArea();
     final int RESULT_WINDOW_TEXTAREA_WIDTH = 400;
     final int RESULT_WINDOW_TEXTAREA_HEIGHT = 200;
     final int RESULT_WINDOW_TEXTAREA_LAYOUT_X = (WINDOW_WIDTH / 2) - (RESULT_WINDOW_TEXTAREA_WIDTH / 2);
@@ -268,7 +269,7 @@ public class Main extends Application {
     backBQ.setOnAction(e -> onBackClicked(scene, mainMenu));
     backBA.setOnAction(e -> onBackClicked(scene, mainMenu));
     submitQuestion.setOnAction(e -> onSubmitClicked(inputQuestionField, inputAnswerField, adminMenu, confirmation));
-    resultB.setOnAction(e -> onResultClicked(scene, resultMenu));
+    resultB.setOnAction(e -> onResultClicked(scene, resultMenu, resultTextFromFile));
     backBR.setOnAction(e -> onBackClicked(scene, mainMenu));
     startQuizB.setOnAction(e -> onStartQuizClicked(scene, quizMenu, quizArea, userName, notifyUser, qAndAs, nextQB, questionArea, mainMenu, answerBox, questionNumber));
 
@@ -394,7 +395,19 @@ public class Main extends Application {
     adminMenu.getChildren().add(text);
   }
 
-  public static void onResultClicked(Scene scene, Parent resultMenu) {
+  public static void onResultClicked(Scene scene, Parent resultMenu, TextArea resultTextFromFile) {
+    String resultantString = "";
+    try {
+      Scanner results = new Scanner(new FileInputStream("Results.txt"));
+      while (results.hasNextLine()) {
+        String lineOfText = results.nextLine();
+        resultantString += lineOfText + "\n";
+      }
+      resultTextFromFile.setText(resultantString);
+      results.close();
+    } catch (IOException e) {
+      System.out.println(e.getMessage());
+    }
     scene.setRoot(resultMenu);
   }
 
@@ -405,6 +418,7 @@ public class Main extends Application {
     notifyUser.setLayoutY(72);
     notifyUser.setText("");
     if (userName.getText().trim().length() > 0) {
+      user_name_gloal = userName.getText();
       try {
         Scanner file = new Scanner(new FileInputStream("Questions.txt"));
         qAndAs.clear();
@@ -457,7 +471,7 @@ public class Main extends Application {
       // System.out.println("Number of lines: " + numberOfLines);
       // System.out.println("Score: " + score);
       int percentage = (int) ((score / (float) numberOfLines) * 100);
-      score = 0;
+      
       Group quizFinishedScreen = new Group();
       Text quizFinishedText = new Text("The Quiz has finished!\nYou Scored " + percentage + "% in 5 minutes");
       quizFinishedText.setFill(Color.BEIGE);
@@ -476,6 +490,15 @@ public class Main extends Application {
       goBackToMain.setLayoutY((WINDOW_HEIGHT / 2) + 50);
       quizFinishedScreen.getChildren().add(goBackToMain);
       goBackToMain.setOnAction(e -> onBackClicked(scene, mainMenu));
+
+      try {
+        FileWriter fw = new FileWriter(new File("Results.txt"), true);
+        fw.write("Name: " + user_name_gloal + "\n" + "Score: " + score + "\n\n");
+        fw.close();
+      } catch (IOException e) {
+        System.out.println("Error in file Results.txt");
+      }
+      score = 0;
     }
   }
 
