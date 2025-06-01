@@ -1,0 +1,9 @@
+1. There are a total of 12 questions in this quiz.
+2. You will have a total of 12 minutes to solve the entire quiz (1 minute for each question).
+3. You cannot go back to the previous question once you have clicked on "Next Question".
+4. Each question will have a 1 minute timer. If you fail to answer a question within the timer, then you will automatically be forwarded to the next question. The entry within the answer field will be counted as your answer.
+5. You cannot Quit after you have started the quiz.
+6. At the end of the quiz, you will be told on how you did. You can see a more detailed summary at the "Show Results" button at the main menu.
+7. Be sure to enter your name at the top of this menu.
+8. Empty answers will also be considered as answer by the user.
+9. Good luck!

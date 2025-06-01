@@ -1,0 +1,7 @@
+What is the capital of Pakistan?:Islamabad
+What is the capital of Turkey?:Ankara
+What is 9 + 10?:19
+what is 76 - 76:0
+What is 2 + 2:4
+What is the capital of Japan?:Tokyo
+What is the capital of Gambia:Banjul
