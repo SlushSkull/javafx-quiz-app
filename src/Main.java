@@ -1,14 +1,17 @@
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Scanner;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.stage.*;
+import javafx.util.Duration;
 
 public class Main extends Application {
   // Sets windows width and height
@@ -18,12 +21,45 @@ public class Main extends Application {
   public static int displayedQuestion = 0;
   public static int score = 0;
   public static String user_name_gloal;
+
+  // Timer fields
+  public static Timeline questionTimer;
+  public static int timeRemaining = 60; // seconds per question
+  public static long quizStartTime;
+
+  // Button Styling
+  public static String buttonStyle = 
+    "-fx-background-color: #3a3a3a;" +     // dark background
+    "-fx-text-fill: white;" +             // white text
+    "-fx-font-size: 16px;" +              // optional: font size
+    "-fx-background-radius: 12;" +        // rounded corners
+    "-fx-border-radius: 12;" +            // rounded border
+    "-fx-border-color: beige;" +           // optional: subtle border
+    "-fx-border-width: 1px;";              // border thickness
+
+  public static String hoverStyle =
+    "-fx-background-color: #505050;" +  // slightly lighter
+    "-fx-text-fill: white;" +
+    "-fx-font-size: 16px;" +
+    "-fx-background-radius: 12;" +
+    "-fx-border-radius: 12;" +
+    "-fx-border-color: beige;" +         // optional: lighter border
+    "-fx-border-width: 1px;";
+
+  // TextArea Styling
+  public static String textAreaStyle = 
+    "-fx-control-inner-background: #333333;" +  // Dark background inside the text area
+    "-fx-text-fill: beige;" +                 // White text color
+    "-fx-highlight-fill: #555555;" +            // Background color when text is selected
+    "-fx-highlight-text-fill: white;" +         // Text color when selected
+    "-fx-border-color: #444444;" +              // Border color
+    "-fx-background-color: #2b2b2b;";            // Outer background (helps with full dark mode)
+
   @Override
   public void start(Stage stage) {
 
     final Color BACKGROUND_COLOR = Color.rgb(33, 33, 33);
     final String TITLE_TEXT = "Quiz App";
-
 
     // Sets the default placement of the window on the screen when app is run
     final int WINDOW_PLACEMENT_DEFAULT_X = 250;
@@ -43,10 +79,10 @@ public class Main extends Application {
 
     // Setting up the Header Text
     Text header = new Text("Quiz App");
-    header.setX((WINDOW_WIDTH / 2) - 100);
-    header.setY(50);
     header.setFont(Font.font("Verdana", 50));
     header.setFill(Color.BEIGE);
+    header.setLayoutX((WINDOW_WIDTH / 2) - (header.getLayoutBounds().getWidth() / 2));
+    header.setY(80);
     mainMenu.getChildren().add(header);
 
     /* Buttons */
@@ -55,29 +91,38 @@ public class Main extends Application {
     Button startB = new Button();
     startB.setText("Start Quiz");
     // button events are handled in a separate section below
-    startB.setLayoutX(320);
-    startB.setLayoutY(150);
     startB.setMinWidth(200);
     startB.setMinHeight(50);
+    startB.setLayoutX((WINDOW_WIDTH / 2) - (startB.getMinWidth() / 2));
+    startB.setLayoutY(150);
     mainMenu.getChildren().add(startB);
+    startB.setStyle(buttonStyle);
+    startB.setOnMouseEntered(e -> startB.setStyle(hoverStyle));
+    startB.setOnMouseExited(e  -> startB.setStyle(buttonStyle));
 
     // Admin Button
     Button adminB = new Button();
     adminB.setText("Admin Login");
     // button events are handled in a separate section below
-    adminB.setLayoutX(320);
-    adminB.setLayoutY(250);
     adminB.setMinWidth(200);
     adminB.setMinHeight(50);
+    adminB.setLayoutX((WINDOW_WIDTH / 2) - (adminB.getMinWidth() / 2));
+    adminB.setLayoutY(250);
     mainMenu.getChildren().add(adminB);
+    adminB.setStyle(buttonStyle);
+    adminB.setOnMouseEntered(e -> adminB.setStyle(hoverStyle));
+    adminB.setOnMouseExited(e  -> adminB.setStyle(buttonStyle));
 
     // Show Results button
     Button resultB = new Button("Show Results");
-    resultB.setLayoutX(320);
-    resultB.setLayoutY(350);
     resultB.setMinWidth(200);
     resultB.setMinHeight(50);
+    resultB.setLayoutX((WINDOW_WIDTH / 2) - (resultB.getMinWidth() / 2));
+    resultB.setLayoutY(350);
     mainMenu.getChildren().add(resultB);
+    resultB.setStyle(buttonStyle);
+    resultB.setOnMouseEntered(e -> resultB.setStyle(hoverStyle));
+    resultB.setOnMouseExited(e  -> resultB.setStyle(buttonStyle));
 
     /*
      * 
@@ -111,6 +156,7 @@ public class Main extends Application {
     instructions.setMinWidth(600);
     instructions.setMinHeight(300);
     quizMenu.getChildren().add(instructions);
+    instructions.setStyle(textAreaStyle);
     
     final int QUIZ_MENU_INSTRUCTIONS_BUTTON_LAYOUT_X = 200;
     final int QUIZ_MENU_INSTRUCTIONS_BUTTON_LAYOUT_Y = 400;
@@ -120,6 +166,9 @@ public class Main extends Application {
     backBQ.setMinWidth(200);
     backBQ.setMinHeight(50);
     quizMenu.getChildren().add(backBQ);
+    backBQ.setStyle(buttonStyle);
+    backBQ.setOnMouseEntered(e -> backBQ.setStyle(hoverStyle));
+    backBQ.setOnMouseExited(e  -> backBQ.setStyle(buttonStyle));
 
     Button startQuizB = new Button("Start Quiz");
     startQuizB.setLayoutX(QUIZ_MENU_INSTRUCTIONS_BUTTON_LAYOUT_X + 205);
@@ -127,6 +176,9 @@ public class Main extends Application {
     startQuizB.setMinWidth(200);
     startQuizB.setMinHeight(50);
     quizMenu.getChildren().add(startQuizB);
+    startQuizB.setStyle(buttonStyle);
+    startQuizB.setOnMouseEntered(e -> startQuizB.setStyle(hoverStyle));
+    startQuizB.setOnMouseExited(e  -> startQuizB.setStyle(buttonStyle));
 
     Text notifyUser = new Text();
 
@@ -152,6 +204,7 @@ public class Main extends Application {
     questionArea.setMaxHeight(50);
     questionArea.setEditable(false);
     quizArea.getChildren().add(questionArea);
+    questionArea.setStyle(textAreaStyle);
 
     Text answerBoxText = new Text("Answer:");
     answerBoxText.setFont(Font.font("Verdana", 20));
@@ -172,7 +225,17 @@ public class Main extends Application {
     nextQB.setMinWidth(200);
     nextQB.setMinHeight(50);
     quizArea.getChildren().add(nextQB);
+    nextQB.setStyle(buttonStyle);
+    nextQB.setOnMouseEntered(e -> nextQB.setStyle(hoverStyle));
+    nextQB.setOnMouseExited(e  -> nextQB.setStyle(buttonStyle));
 
+    // Timer display
+    Text timerText = new Text("Time left: 60s");
+    timerText.setFont(Font.font("Verdana", 20));
+    timerText.setFill(Color.LIGHTCORAL);
+    timerText.setLayoutX(620);
+    timerText.setLayoutY(50);
+    quizArea.getChildren().add(timerText);
 
     /*
      * 
@@ -226,12 +289,18 @@ public class Main extends Application {
     submitQuestion.setLayoutX((WINDOW_WIDTH / 2) + 100);
     submitQuestion.setLayoutY(ADMIN_WINDOW_BUTTON_LAYOUT_Y);
     adminMenu.getChildren().add(submitQuestion);
+    submitQuestion.setStyle(buttonStyle);
+    submitQuestion.setOnMouseEntered(e -> submitQuestion.setStyle(hoverStyle));
+    submitQuestion.setOnMouseExited(e  -> submitQuestion.setStyle(buttonStyle));
 
     // Cancel button (goes back to main menu)
     Button backBA = new Button("Cancel");
     backBA.setLayoutX((WINDOW_WIDTH / 2) - 100);
     backBA.setLayoutY(ADMIN_WINDOW_BUTTON_LAYOUT_Y);
     adminMenu.getChildren().add(backBA);
+    backBA.setStyle(buttonStyle);
+    backBA.setOnMouseEntered(e -> backBA.setStyle(hoverStyle));
+    backBA.setOnMouseExited(e  -> backBA.setStyle(buttonStyle));
 
     /*
      * 
@@ -253,13 +322,17 @@ public class Main extends Application {
     resultTextFromFile.setLayoutX(RESULT_WINDOW_TEXTAREA_LAYOUT_X);
     resultTextFromFile.setLayoutY(RESULT_WINDOW_TEXTAREA_LAYOUT_Y);
     resultMenu.getChildren().add(resultTextFromFile);
+    resultTextFromFile.setStyle(textAreaStyle);
 
     Button backBR = new Button("Go Back to Main Menu");
     final int RESULT_WINDOW_BACKBUTTON_WIDTH = 140;
     final int RESULT_WINDOW_BACKBUTTON_HEIGHT = 20;
-    backBR.setLayoutX((WINDOW_WIDTH / 2) - (RESULT_WINDOW_BACKBUTTON_WIDTH / 2));
-    backBR.setLayoutY(RESULT_WINDOW_BACKBUTTON_HEIGHT + 100);
+    backBR.setLayoutX((WINDOW_WIDTH / 2) - (RESULT_WINDOW_BACKBUTTON_WIDTH / 2) - 20);
+    backBR.setLayoutY(RESULT_WINDOW_BACKBUTTON_HEIGHT + 90);
     resultMenu.getChildren().add(backBR);
+    backBR.setStyle(buttonStyle);
+    backBR.setOnMouseEntered(e -> backBR.setStyle(hoverStyle));
+    backBR.setOnMouseExited(e  -> backBR.setStyle(buttonStyle));
 
     //////////////////////////
     //*** Button Actions ***//
@@ -271,7 +344,7 @@ public class Main extends Application {
     submitQuestion.setOnAction(e -> onSubmitClicked(inputQuestionField, inputAnswerField, adminMenu, confirmation));
     resultB.setOnAction(e -> onResultClicked(scene, resultMenu, resultTextFromFile));
     backBR.setOnAction(e -> onBackClicked(scene, mainMenu));
-    startQuizB.setOnAction(e -> onStartQuizClicked(scene, quizMenu, quizArea, userName, notifyUser, qAndAs, nextQB, questionArea, mainMenu, answerBox, questionNumber));
+    startQuizB.setOnAction(e -> onStartQuizClicked(scene, quizMenu, quizArea, userName, notifyUser, qAndAs, nextQB, questionArea, mainMenu, answerBox, questionNumber, timerText));
 
     stage.setTitle(TITLE_TEXT);
     stage.setResizable(false);
@@ -350,6 +423,9 @@ public class Main extends Application {
       back.setLayoutY(WINDOW_HEIGHT - 200);
       back.setMinWidth(200);
       back.setMinHeight(50);
+      back.setStyle(buttonStyle);
+      back.setOnMouseEntered(e -> back.setStyle(hoverStyle));
+      back.setOnMouseExited(e  -> back.setStyle(buttonStyle));
       fileNotFoundMenu.getChildren().add(back);
       back.setOnAction(e -> onBackClicked(scene, mainMenu));
       scene.setRoot(fileNotFoundMenu);
@@ -411,7 +487,8 @@ public class Main extends Application {
     scene.setRoot(resultMenu);
   }
 
-  public static void onStartQuizClicked(Scene scene, Group quizMenu, Group quizArea, TextField userName, Text notifyUser, ArrayList<String> qAndAs, Button nextQB, TextArea questionArea, Parent mainMenu, TextField answerBox, Text questionNumber) {
+  public static void onStartQuizClicked(Scene scene, Group quizMenu, Group quizArea, TextField userName, Text notifyUser, ArrayList<String> qAndAs, Button nextQB, TextArea questionArea, Parent mainMenu, TextField answerBox, Text questionNumber, Text timerText) {
+
     notifyUser.setFill(Color.RED);
     notifyUser.setFont(Font.font("Verdana", 10));
     notifyUser.setLayoutX(340);
@@ -434,9 +511,13 @@ public class Main extends Application {
         for (int i = 0; i < qAndAsArr.length; i++) {
           qAndAsArr[i] = arr[i].split(":");
         }
-        nextQB.setOnAction(e -> onNextQuestionClicked(scene, qAndAsArr, questionArea, mainMenu, answerBox, questionNumber));
+        nextQB.setOnAction(e -> onNextQuestionClicked(scene, qAndAsArr, questionArea, mainMenu, answerBox, questionNumber, timerText));
         displayFirstQuestion(scene, qAndAsArr, questionArea);
         file.close();
+        // record quiz time start
+        quizStartTime = System.currentTimeMillis();
+        // start question timer
+        startQuestionTimer(qAndAsArr, scene, quizArea, mainMenu, answerBox, questionNumber, timerText, questionArea);
       } catch (IOException e) {
         System.out.println("Errorr");
       }
@@ -448,11 +529,32 @@ public class Main extends Application {
     }
   }
 
+  public static void startQuestionTimer(String[][] qAndAsArr, Scene scene, Parent quizArea, Parent mainMenu, TextField answerBox, Text questionNumber, Text timerText, TextArea questionArea) {
+    // stop existing timer
+    if (questionTimer != null) {
+      questionTimer.stop();
+    }
+    timeRemaining = 60; // this controls the time for each question in seconds
+    timerText.setText("Time left: 60s");
+
+    questionTimer = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
+      timeRemaining--;
+      timerText.setText("Time left: " + timeRemaining + "s");
+      if (timeRemaining <= 0) {
+        // treat as wrong and move to next
+        questionTimer.stop();
+        onNextQuestionClicked(scene, qAndAsArr, questionArea, mainMenu, answerBox, questionNumber,  timerText);
+      }
+    }));
+    questionTimer.setCycleCount(Timeline.INDEFINITE);
+    questionTimer.play();
+  }
+
   public static void displayFirstQuestion(Scene scene, String[][] qAndAsArr, TextArea questionArea) {
     questionArea.setText(qAndAsArr[0][0]);
   }
 
-  public static void onNextQuestionClicked(Scene scene, String[][] qAndAsArr, TextArea questionArea, Parent mainMenu, TextField answerBox, Text questionNumber) {
+  public static void onNextQuestionClicked(Scene scene, String[][] qAndAsArr, TextArea questionArea, Parent mainMenu, TextField answerBox, Text questionNumber, Text timerText) {
     // System.out.println(Arrays.deepToString(qAndAsArr));
     try {
       String userAnswer = answerBox.getText().trim();
@@ -460,6 +562,7 @@ public class Main extends Application {
       if (userAnswer.equalsIgnoreCase(qAndAsArr[displayedQuestion][1])) {
         score++;
       }
+      startQuestionTimer(qAndAsArr, scene, answerBox, mainMenu, answerBox, questionNumber, timerText, questionArea);
       questionArea.setText(qAndAsArr[displayedQuestion + 1][0]);
       answerBox.clear();
       displayedQuestion++;
@@ -473,12 +576,17 @@ public class Main extends Application {
       int percentage = (int) ((score / (float) numberOfLines) * 100);
       
       Group quizFinishedScreen = new Group();
-      Text quizFinishedText = new Text("The Quiz has finished!\nYou Scored " + percentage + "% in 5 minutes");
+      double elapsed_time = System.currentTimeMillis() - quizStartTime;
+      double toMinutes = elapsed_time / (1000 * 60);
+      int mins = (int) toMinutes;
+      int sec = (int) ((toMinutes - mins) * 60);
+      Text quizFinishedText = new Text("The Quiz has finished!\nYou Scored " + percentage + "% in " + mins + " minutes and " + sec + " seconds");
+      timeRemaining = 60;
       quizFinishedText.setFill(Color.BEIGE);
       quizFinishedText.setFont(Font.font("Verdana", 30));
       quizFinishedText.setTextAlignment(TextAlignment.CENTER);
       quizFinishedText.setLayoutX((WINDOW_WIDTH - 600) / 2);
-      quizFinishedText.setLayoutY(WINDOW_HEIGHT / 2);
+      quizFinishedText.setLayoutY((WINDOW_HEIGHT / 2) - 50);
       quizFinishedText.setWrappingWidth(600);
       quizFinishedScreen.getChildren().add(quizFinishedText);
       scene.setRoot(quizFinishedScreen);
@@ -490,10 +598,13 @@ public class Main extends Application {
       goBackToMain.setLayoutY((WINDOW_HEIGHT / 2) + 50);
       quizFinishedScreen.getChildren().add(goBackToMain);
       goBackToMain.setOnAction(e -> onBackClicked(scene, mainMenu));
+      goBackToMain.setStyle(buttonStyle);
+      goBackToMain.setOnMouseEntered(e -> goBackToMain.setStyle(hoverStyle));
+      goBackToMain.setOnMouseExited(e  -> goBackToMain.setStyle(buttonStyle));
 
       try {
         FileWriter fw = new FileWriter(new File("Results.txt"), true);
-        fw.write("Name: " + user_name_gloal + "\n" + "Score: " + score + "\n\n");
+        fw.write("Name: " + user_name_gloal + "\n" + "Score: " + score  + " out of " + numberOfLines + "\n" + "Time Taken: " + mins + " mins and " + sec + " seconds\n\n");
         fw.close();
       } catch (IOException e) {
         System.out.println("Error in file Results.txt");
